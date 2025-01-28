@@ -1,0 +1,16 @@
+{
+  "name": "pupdebug",
+  "version": "0.0.01",
+  "description": "puppeteer based tester",
+  "main": "index.js",
+  "scripts": {
+    "release": "git commit -a -m ranrelease && npm version $(semver $npm_package_version -i patch) && npm publish --tag latest"
+  },  
+  "author": "lanmower",
+  "dependencies": {
+    "puppeteer": "^19.11.1"
+  },
+  "bin": {
+    "app2app": "index.js"
+  }
+}
