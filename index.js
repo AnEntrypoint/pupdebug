@@ -32,13 +32,10 @@ puppeteer.launch({
   });
 
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0' }); // Changed to wait until network is idle
     await page.waitForSelector('body'); // Wait for basic content
     console.log('Page loaded successfully');
 
-    // Wait for network to be idle before waiting for 3 seconds
-    await page.waitForFunction('window.performance.getEntriesByType("resource").every((res) => res.responseEnd > 0) && document.readyState === "complete"');
-    
     // Wait for 3 seconds before closing the browser
     await page.waitForTimeout(3000);
     await browser.close(); // Close the browser automatically
