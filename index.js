@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+process.stdout = process.stderr;
 console.log = console.error;
 const puppeteer = require('puppeteer');
 
