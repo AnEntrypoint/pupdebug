@@ -1,10 +1,12 @@
+#!/usr/bin/env node
 const puppeteer = require('puppeteer');
 
 puppeteer.launch({
   headless: false,
   defaultViewport: null
 }).then(async browser => {
-  const page = await browser.newPage();
+  const pages = await browser.pages();
+  const page = pages[0]; // Use existing first tab instead of creating new one
   
   // Forward console messages from browser to node
   page.on('console', message => {
