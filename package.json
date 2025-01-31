@@ -1,6 +1,6 @@
 {
   "name": "pupdebug",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "puppeteer based tester",
   "main": "node index.js",
   "scripts": {
