@@ -4,7 +4,7 @@
   "description": "puppeteer based tester",
   "main": "node index.js",
   "scripts": {
-    "release": "git commit -a -m ranrelease && npm version minor && npm publish --tag latest"
+    "release": "git commit -a -m ranrelease && npm version patch  && npm publish --tag latest"
   },
   "author": "lanmower",
   "dependencies": {
