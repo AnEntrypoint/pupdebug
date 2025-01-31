@@ -3,6 +3,8 @@ process.stdout = process.stderr;
 console.log = console.error;
 const puppeteer = require('puppeteer');
 
+const href = process.argv[2] || 'http://localhost:3000'; // Use argument as href or default to localhost
+
 puppeteer.launch({
   headless: false,
   defaultViewport: null,
@@ -16,28 +18,17 @@ puppeteer.launch({
     const type = message.type();
     const text = message.text();
     
-    switch(type) {
-      case 'log':
-        console.log(text);
-        break;
-      case 'warn':
-        console.warn(text);
-        break;
-      case 'error':
-        console.error(text);
-        break;
-      default:
-        console.log(`${type}: ${text}`);
-    }
+    // Redirect all console messages to stderr
+    console.error(text);
   });
 
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0' }); // Changed to wait until network is idle
+    await page.goto(href, { waitUntil: 'networkidle0' }); // Use the href variable
     await page.waitForSelector('body'); // Wait for basic content
-    console.log('Page loaded successfully');
+    console.error('Page loaded successfully');
 
     // Remove the auto close functionality
-    console.log('Browser will remain open for debugging. Press Ctrl+C to close.');
+    console.error('Browser will remain open for debugging. Press Ctrl+C to close.');
 
   } catch (error) {
     console.error('Navigation failed:', error);
