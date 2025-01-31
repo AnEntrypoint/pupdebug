@@ -36,9 +36,8 @@ puppeteer.launch({
     await page.waitForSelector('body'); // Wait for basic content
     console.log('Page loaded successfully');
 
-    // Wait for 3 seconds before closing the browser
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Replaced waitForTimeout with setTimeout
-    await browser.close(); // Close the browser automatically
+    // Remove the auto close functionality
+    console.log('Browser will remain open for debugging. Press Ctrl+C to close.');
 
   } catch (error) {
     console.error('Navigation failed:', error);
