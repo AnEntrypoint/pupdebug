@@ -158,7 +158,7 @@ puppeteer.launch({
     console.debug('Request failed:', request);
     console.error(`Request Failed: ${request.url()} - ${request.failure()?.errorText}`);
   });
-
+ 
   try {
     const startTime = Date.now();
     await page.goto(href, { waitUntil: 'networkidle0' });
