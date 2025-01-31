@@ -1,33 +1,30 @@
 #!/usr/bin/env node
 const puppeteer = require('puppeteer');
 
-// Create custom writable streams to capture stdout and stderr
+// Create custom writable stream to capture stderr
 const { Writable } = require('stream');
 const capturedOutput = {
-    stdout: [],
     stderr: []
 };
 
 class CaptureStream extends Writable {
-    constructor(type) {
+    constructor() {
         super();
-        this.type = type;
     }
     
     _write(chunk, encoding, callback) {
         const output = chunk.toString();
-        capturedOutput[this.type].push(output);
+        capturedOutput.stderr.push(output);
         // Avoid recursive debug logging
         if (!output.includes('Captured ')) {
-            console.debug(`Captured ${this.type}:`, output);
+            console.debug(`Captured stderr:`, output);
         }
-        process[this.type].write(chunk, encoding, callback);
+        process.stderr.write(chunk, encoding, callback);
     }
 }
 
-// Override stdout and stderr
-process.stdout = new CaptureStream('stdout');
-process.stderr = new CaptureStream('stderr');
+// Override stderr
+process.stderr = new CaptureStream();
 
 const href = process.argv[2] || 'http://localhost:3000';
 
@@ -146,7 +143,7 @@ puppeteer.launch({
     if (!args.some(arg => String(arg).includes('Received console message'))) {
       console.debug('Received console message from client:', args);
     }
-    console.log(...args);
+    console.error(...args);
   });
 
   page.on('pageerror', error => {
@@ -164,8 +161,8 @@ puppeteer.launch({
     await page.goto(href, { waitUntil: 'networkidle0' });
     await page.waitForSelector('body');
     const loadTime = Date.now() - startTime;
-    console.log(`Page loaded successfully in ${loadTime}ms`);
-    console.log(`Browser will remain open for debugging. Press Ctrl+C to close.`);
+    console.error(`Page loaded successfully in ${loadTime}ms`);
+    console.error(`Browser will remain open for debugging. Press Ctrl+C to close.`);
 
   } catch (error) {
     console.error(`Navigation failed: ${error.message}\n${error.stack}`);
