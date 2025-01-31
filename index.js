@@ -17,8 +17,10 @@ class CaptureStream extends Writable {
     _write(chunk, encoding, callback) {
         const output = chunk.toString();
         capturedOutput[this.type].push(output);
-        // Log debug info about captured output
-        console.debug(`Captured ${this.type}:`, output);
+        // Avoid recursive debug logging
+        if (!output.includes('Captured ')) {
+            console.debug(`Captured ${this.type}:`, output);
+        }
         process[this.type].write(chunk, encoding, callback);
     }
 }
@@ -48,47 +50,82 @@ puppeteer.launch({
       debug: console.debug
     };
 
+    let isLogging = false; // Flag to prevent recursive logging
+
     const sendRawLog = (type, args) => {
-      // Log debug info before sending
-      console.debug(`Preparing to send ${type} log with args:`, args);
+      if (isLogging) return;
+      isLogging = true;
       
-      window.postMessage({
-        type: 'client-log',
-        data: {
-          type,
-          args: args.map(arg => {
-            try {
-              if (arg instanceof Error) {
-                return `${arg.message}\n${arg.stack}`;
-              }
-              if (typeof arg === 'object' && arg !== null) {
-                return JSON.stringify(arg);
-              }
-              return String(arg);
-            } catch (e) {
-              return `[Error converting log argument: ${e.message}]`;
-            }
-          })
+      try {
+        // Avoid recursive debug logging
+        if (!args.some(arg => String(arg).includes('Preparing to send'))) {
+          console.debug(`Preparing to send ${type} log with args:`, args);
         }
-      }, '*');
+        
+        window.postMessage({
+          type: 'client-log',
+          data: {
+            type,
+            args: args.map(arg => {
+              try {
+                if (arg instanceof Error) {
+                  return `${arg.message}\n${arg.stack}`;
+                }
+                if (typeof arg === 'object' && arg !== null) {
+                  return JSON.stringify(arg);
+                }
+                return String(arg);
+              } catch (e) {
+                return `[Error converting log argument: ${e.message}]`;
+              }
+            })
+          }
+        }, '*');
+      } finally {
+        isLogging = false;
+      }
     };
 
     ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
       console[method] = (...args) => {
-        console.debug(`Intercepted console.${method} with args:`, args);
-        sendRawLog(method, args);
-        originalConsole[method].apply(console, args);
+        if (isLogging) return;
+        isLogging = true;
+        
+        try {
+          // Avoid recursive debug logging
+          if (!args.some(arg => String(arg).includes('Intercepted console'))) {
+            console.debug(`Intercepted console.${method} with args:`, args);
+          }
+          sendRawLog(method, args);
+          originalConsole[method].apply(console, args);
+        } finally {
+          isLogging = false;
+        }
       };
     });
 
     window.addEventListener('error', (event) => {
-      console.debug('Window error event captured:', event);
-      sendRawLog('error', [event.error || event.message || event]);
+      if (isLogging) return;
+      isLogging = true;
+      
+      try {
+        console.debug('Window error event captured:', event);
+        sendRawLog('error', [event.error || event.message || event]);
+      } finally {
+        isLogging = false;
+      }
     });
 
     window.addEventListener('unhandledrejection', (event) => {
-      console.debug('Unhandled rejection captured:', event);
-      sendRawLog('error', [event.reason]);
+      if (isLogging) return;
+      isLogging = true;
+      
+      try {
+        console.debug('Unhandled rejection captured:', event);
+        sendRawLog('error', [event.reason]);
+      } finally {
+        isLogging = false;
+      }
     });
   });
 
@@ -105,7 +142,10 @@ puppeteer.launch({
       return arg.toString();
     }));
     
-    console.debug('Received console message from client:', args);
+    // Avoid recursive debug logging
+    if (!args.some(arg => String(arg).includes('Received console message'))) {
+      console.debug('Received console message from client:', args);
+    }
     console.log(...args);
   });
 
