@@ -17,7 +17,7 @@ class CaptureStream extends Writable {
         capturedOutput.stderr.push(output);
         // Avoid recursive debug logging
         if (!output.includes('Captured ')) {
-            console.debug(`Captured stderr:`, output);
+            process.stderr.write(`Captured stderr: ${output}\n`);
         }
         process.stderr.write(chunk, encoding, callback);
     }
@@ -56,7 +56,7 @@ puppeteer.launch({
       try {
         // Avoid recursive debug logging
         if (!args.some(arg => String(arg).includes('Preparing to send'))) {
-          console.debug(`Preparing to send ${type} log with args:`, args);
+          process.stderr.write(`Preparing to send ${type} log with args: ${JSON.stringify(args)}\n`);
         }
         
         window.postMessage({
@@ -91,7 +91,7 @@ puppeteer.launch({
         try {
           // Avoid recursive debug logging
           if (!args.some(arg => String(arg).includes('Intercepted console'))) {
-            console.debug(`Intercepted console.${method} with args:`, args);
+            process.stderr.write(`Intercepted console.${method} with args: ${JSON.stringify(args)}\n`);
           }
           sendRawLog(method, args);
           originalConsole[method].apply(console, args);
@@ -106,7 +106,7 @@ puppeteer.launch({
       isLogging = true;
       
       try {
-        console.debug('Window error event captured:', event);
+        process.stderr.write(`Window error event captured: ${JSON.stringify(event)}\n`);
         sendRawLog('error', [event.error || event.message || event]);
       } finally {
         isLogging = false;
@@ -118,7 +118,7 @@ puppeteer.launch({
       isLogging = true;
       
       try {
-        console.debug('Unhandled rejection captured:', event);
+        process.stderr.write(`Unhandled rejection captured: ${JSON.stringify(event)}\n`);
         sendRawLog('error', [event.reason]);
       } finally {
         isLogging = false;
@@ -141,19 +141,19 @@ puppeteer.launch({
     
     // Avoid recursive debug logging
     if (!args.some(arg => String(arg).includes('Received console message'))) {
-      console.debug('Received console message from client:', args);
+      process.stderr.write(`Received console message from client: ${JSON.stringify(args)}\n`);
     }
-    console.error(...args);
+    process.stderr.write(args.join(' ') + '\n');
   });
 
   page.on('pageerror', error => {
-    console.debug('Page error captured:', error);
-    console.error(`${error.message}\n${error.stack}`);
+    process.stderr.write(`Page error captured: ${JSON.stringify(error)}\n`);
+    process.stderr.write(`${error.message}\n${error.stack}\n`);
   });
 
   page.on('requestfailed', request => {
-    console.debug('Request failed:', request);
-    console.error(`Request Failed: ${request.url()} - ${request.failure()?.errorText}`);
+    process.stderr.write(`Request failed: ${JSON.stringify(request)}\n`);
+    process.stderr.write(`Request Failed: ${request.url()} - ${request.failure()?.errorText}\n`);
   });
  
   try {
@@ -161,16 +161,16 @@ puppeteer.launch({
     await page.goto(href, { waitUntil: 'networkidle0' });
     await page.waitForSelector('body');
     const loadTime = Date.now() - startTime;
-    console.error(`Page loaded successfully in ${loadTime}ms`);
-    console.error(`Browser will remain open for debugging. Press Ctrl+C to close.`);
+    process.stderr.write(`Page loaded successfully in ${loadTime}ms\n`);
+    process.stderr.write(`Browser will remain open for debugging. Press Ctrl+C to close.\n`);
 
   } catch (error) {
-    console.error(`Navigation failed: ${error.message}\n${error.stack}`);
+    process.stderr.write(`Navigation failed: ${error.message}\n${error.stack}\n`);
     await browser.close();
     process.exit(1);
   }
  
 }).catch(error => {
-  console.error(`Error: ${error.message}\n${error.stack}`);
+  process.stderr.write(`Error: ${error.message}\n${error.stack}\n`);
   process.exit(1);
 });
