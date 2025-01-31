@@ -17,6 +17,8 @@ class CaptureStream extends Writable {
     _write(chunk, encoding, callback) {
         const output = chunk.toString();
         capturedOutput[this.type].push(output);
+        // Log debug info about captured output
+        console.debug(`Captured ${this.type}:`, output);
         process[this.type].write(chunk, encoding, callback);
     }
 }
@@ -37,27 +39,6 @@ puppeteer.launch({
   
   // Inject client-side logging capture
   await page.evaluateOnNewDocument(() => {
-    // Capture original stdout and stderr
-    const originalStdout = process.stdout.write.bind(process.stdout);
-    const originalStderr = process.stderr.write.bind(process.stderr);
-
-    // Override stdout and stderr
-    process.stdout.write = (chunk, encoding, callback) => {
-      window.postMessage({
-        type: 'client-stdout',
-        data: chunk.toString()
-      }, '*');
-      originalStdout(chunk, encoding, callback);
-    };
-
-    process.stderr.write = (chunk, encoding, callback) => {
-      window.postMessage({
-        type: 'client-stderr',
-        data: chunk.toString()
-      }, '*');
-      originalStderr(chunk, encoding, callback);
-    };
-
     // Capture console methods
     const originalConsole = {
       log: console.log,
@@ -68,6 +49,9 @@ puppeteer.launch({
     };
 
     const sendRawLog = (type, args) => {
+      // Log debug info before sending
+      console.debug(`Preparing to send ${type} log with args:`, args);
+      
       window.postMessage({
         type: 'client-log',
         data: {
@@ -91,16 +75,19 @@ puppeteer.launch({
 
     ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
       console[method] = (...args) => {
+        console.debug(`Intercepted console.${method} with args:`, args);
         sendRawLog(method, args);
         originalConsole[method].apply(console, args);
       };
     });
 
     window.addEventListener('error', (event) => {
+      console.debug('Window error event captured:', event);
       sendRawLog('error', [event.error || event.message || event]);
     });
 
     window.addEventListener('unhandledrejection', (event) => {
+      console.debug('Unhandled rejection captured:', event);
       sendRawLog('error', [event.reason]);
     });
   });
@@ -118,23 +105,17 @@ puppeteer.launch({
       return arg.toString();
     }));
     
+    console.debug('Received console message from client:', args);
     console.log(...args);
   });
 
-  // Listen for stdout/stderr messages
-  page.on('message', async (message) => {
-    if (message.type() === 'client-stdout') {
-      process.stdout.write(message.text());
-    } else if (message.type() === 'client-stderr') {
-      process.stderr.write(message.text());
-    }
-  });
-
   page.on('pageerror', error => {
+    console.debug('Page error captured:', error);
     console.error(`${error.message}\n${error.stack}`);
   });
 
   page.on('requestfailed', request => {
+    console.debug('Request failed:', request);
     console.error(`Request Failed: ${request.url()} - ${request.failure()?.errorText}`);
   });
 
