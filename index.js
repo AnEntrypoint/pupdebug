@@ -32,12 +32,14 @@ puppeteer.launch({
   });
 
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForSelector('body', { timeout: 5000 }); // Wait for basic content
+    await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('body'); // Wait for basic content
     console.log('Page loaded successfully');
 
-    // Keep browser open
-    await new Promise(() => {});
+    // Wait for network to be idle before closing the browser
+    await page.waitForFunction('window.performance.getEntriesByType("resource").every((res) => res.responseEnd > 0) && document.readyState === "complete"');
+    await browser.close(); // Close the browser automatically
+
   } catch (error) {
     console.error('Navigation failed:', error);
     await browser.close();
