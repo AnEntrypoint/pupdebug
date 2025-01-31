@@ -37,7 +37,7 @@ puppeteer.launch({
     console.log('Page loaded successfully');
 
     // Wait for 3 seconds before closing the browser
-    await page.waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Replaced waitForTimeout with setTimeout
     await browser.close(); // Close the browser automatically
 
   } catch (error) {
