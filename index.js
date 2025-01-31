@@ -66,14 +66,14 @@ puppeteer.launch({
             args: args.map(arg => {
               try {
                 if (arg instanceof Error) {
-                  return `${arg.message}\n${arg.stack}`;
+                  return `CLIENT ERROR: ${arg.message}\n${arg.stack}`;
                 }
                 if (typeof arg === 'object' && arg !== null) {
                   return JSON.stringify(arg);
                 }
                 return String(arg);
               } catch (e) {
-                return `[Error converting log argument: ${e.message}]`;
+                return `CLIENT ERROR: [Error converting log argument: ${e.message}]`;
               }
             })
           }
@@ -107,7 +107,7 @@ puppeteer.launch({
       
       try {
         process.stderr.write(`Window error event captured: ${JSON.stringify(event)}\n`);
-        sendRawLog('error', [event.error || event.message || event]);
+        sendRawLog('error', [`CLIENT ERROR: ${event.error || event.message || event}`]);
       } finally {
         isLogging = false;
       }
@@ -119,7 +119,7 @@ puppeteer.launch({
       
       try {
         process.stderr.write(`Unhandled rejection captured: ${JSON.stringify(event)}\n`);
-        sendRawLog('error', [event.reason]);
+        sendRawLog('error', [`CLIENT ERROR: ${event.reason}`]);
       } finally {
         isLogging = false;
       }
@@ -143,17 +143,18 @@ puppeteer.launch({
     if (!args.some(arg => String(arg).includes('Received console message'))) {
       process.stderr.write(`Received console message from client: ${JSON.stringify(args)}\n`);
     }
-    process.stderr.write(args.join(' ') + '\n');
+    const logPrefix = message.type() === 'error' ? 'CLIENT ERROR:' : 'CLIENT LOG:';
+    process.stderr.write(`${logPrefix} ${args.join(' ')}\n`);
   });
 
   page.on('pageerror', error => {
     process.stderr.write(`Page error captured: ${JSON.stringify(error)}\n`);
-    process.stderr.write(`${error.message}\n${error.stack}\n`);
+    process.stderr.write(`CLIENT ERROR: ${error.message}\n${error.stack}\n`);
   });
 
   page.on('requestfailed', request => {
     process.stderr.write(`Request failed: ${JSON.stringify(request)}\n`);
-    process.stderr.write(`Request Failed: ${request.url()} - ${request.failure()?.errorText}\n`);
+    process.stderr.write(`CLIENT ERROR: Request Failed: ${request.url()} - ${request.failure()?.errorText}\n`);
   });
  
   try {
