@@ -18,7 +18,7 @@ puppeteer.launch({
     const type = message.type();
     const text = message.text();
     
-    // Redirect all console messages to stderr
+    // Log all console messages to stderr
     console.error(text);
   });
 
@@ -26,6 +26,9 @@ puppeteer.launch({
     await page.goto(href, { waitUntil: 'networkidle0' }); // Use the href variable
     await page.waitForSelector('body'); // Wait for basic content
     console.error('Page loaded successfully');
+
+    // Log the React DevTools download link
+    console.error('Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools');
 
     // Remove the auto close functionality
     console.error('Browser will remain open for debugging. Press Ctrl+C to close.');
