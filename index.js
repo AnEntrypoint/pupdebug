@@ -48,7 +48,7 @@ puppeteer.launch({
     await browser.close();
     process.exit(1);
   }
-
+ 
 }).catch(error => {
   console.error('Error:', error);
   process.exit(1);
