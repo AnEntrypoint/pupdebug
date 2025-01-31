@@ -56,7 +56,8 @@ puppeteer.launch({
       try {
         // Avoid recursive debug logging
         if (!args.some(arg => String(arg).includes('Preparing to send'))) {
-          process.stderr.write(`Preparing to send ${type} log with args: ${JSON.stringify(args)}\n`);
+          // Removed process.stderr.write since it's not available in browser
+          console.log(`Preparing to send ${type} log with args: ${JSON.stringify(args)}`);
         }
         
         window.postMessage({
@@ -91,7 +92,8 @@ puppeteer.launch({
         try {
           // Avoid recursive debug logging
           if (!args.some(arg => String(arg).includes('Intercepted console'))) {
-            process.stderr.write(`Intercepted console.${method} with args: ${JSON.stringify(args)}\n`);
+            // Removed process.stderr.write since it's not available in browser
+            console.log(`Intercepted console.${method} with args: ${JSON.stringify(args)}`);
           }
           sendRawLog(method, args);
           originalConsole[method].apply(console, args);
@@ -106,7 +108,8 @@ puppeteer.launch({
       isLogging = true;
       
       try {
-        process.stderr.write(`Window error event captured: ${JSON.stringify(event)}\n`);
+        // Removed process.stderr.write since it's not available in browser
+        console.log(`Window error event captured: ${JSON.stringify(event)}`);
         sendRawLog('error', [`CLIENT ERROR: ${event.error || event.message || event}`]);
       } finally {
         isLogging = false;
@@ -118,7 +121,8 @@ puppeteer.launch({
       isLogging = true;
       
       try {
-        process.stderr.write(`Unhandled rejection captured: ${JSON.stringify(event)}\n`);
+        // Removed process.stderr.write since it's not available in browser
+        console.log(`Unhandled rejection captured: ${JSON.stringify(event)}`);
         sendRawLog('error', [`CLIENT ERROR: ${event.reason}`]);
       } finally {
         isLogging = false;
